@@ -172,15 +172,15 @@ def system_solver(nu, alpha, mlambda, m, nlimit_Nhat, free_parameters, lowernu):
     #   Nhat
     #
     def Nhat_function(nu,alpha,r,nlimit):
-        factor0 = (2.**(alpha-1))*np.sqrt(np.pi)*gamma(alpha+2)
+        factor0 = (2.**(-alpha+1))*np.sqrt(np.pi)*gamma(alpha+2)
         factor1 = ( nu+r )*gamma(alpha+3/2)
-        barrier = ( nu/4/(nu+2*r) )**alpha
+        barrier = ( 1/2/(nu+r) )**alpha+1
         suma = factor0/factor1*barrier
         for n in np.arange(1,nlimit+1):
-            factor0 = (2.**(alpha-1))*(alpha+1.)*np.sqrt(np.pi)*gamma(alpha+2*n+1)
-            factor1 = ( nu+r )*scipy.special.factorial(n)*gamma(alpha+n+3/2)
-            barrier = ( nu/4/(nu+2*r) )**(2*n+alpha)
-            suma = suma + factor0/factor1*barrier
+            Factor0 = factor0*gamma(alpha+2*n+1)
+            Factor1 = factor1*scipy.special.factorial(n)*gamma(alpha+n+3/2)
+            Barrier = ( nu/2/(nu+r) )**(2*n)
+            suma += Factor0/Factor1*Barrier
         return suma;
     #
     #   phi
@@ -202,7 +202,8 @@ def system_solver(nu, alpha, mlambda, m, nlimit_Nhat, free_parameters, lowernu):
         nu = np.tan(nu_atan)
         cNhat = Nhat_inter_re(nu) + 1j*Nhat_inter_im(nu)
         phi = phi_function(cNhat)
-        integrand = phi*(nu-1.)*(nu+nu0)/( (nu**2-1)*(nu**2-nu0**2) )/(np.cos(nu_atan)**2)
+        im_a = imalpha_inter(nu)
+        integrand = (im_a*np.log(nu) + phi)*(nu-1.)*(nu+nu0)/( (nu**2-1)*(nu**2-nu0**2) )/(np.cos(nu_atan)**2)
         if ioption==0:
             output = np.real(integrand)
         else:
@@ -211,7 +212,7 @@ def system_solver(nu, alpha, mlambda, m, nlimit_Nhat, free_parameters, lowernu):
 
     def beta_function(nu,lowernu,discontinuity):
         Integral = PV_analytic_continuation(beta_integrand,nu,lowernu,discontinuity)
-        return np.exp(-Integral)*np.absolute(Nhat)
+        return np.exp(alpha*np.log(nu) + 1j*phi - Integral)*np.absolute(Nhat)
     #
     #   alpha
     #
